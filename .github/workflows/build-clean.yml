@@ -9,7 +9,9 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - name: Restore source code
+      - name: Restore source code           sed -i "s|substringAfterLast('.','')|substringAfterLast('.', \"\")|g" android/app/src/main/java/lv/aiphotostudio/net/StudioApi.kt
+          sed -i '/import androidx.compose.ui.Modifier/a import androidx.compose.ui.unit.dp' android/app/src/main/java/lv/aiphotostudio/ui/CameraScreen.kt
+          sed -i 's|db\.presets()\.observe\.stateIn|db.presets().observe().stateIn|g;s|db\.projects()\.observe\.stateIn|db.projects().observe().stateIn|g' android/app/src/main/java/lv/aiphotostudio/ui/StudioViewModel.kt
         shell: bash
         run: |
           awk '/^          UEsDB/{p=1} p && /^          SOURCE_ARCHIVE$/{exit} p{print $1}' .github/workflows/build-apk.yml | base64 -d > /tmp/aiphoto.zip
