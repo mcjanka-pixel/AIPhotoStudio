@@ -1,0 +1,40 @@
+name: AI Photo Studio - Clean APK Build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore source code
+        shell: bash
+        run: |
+          awk '/^          UEsDB/{p=1} p && /^          SOURCE_ARCHIVE$/{exit} p{print $1}' .github/workflows/build-apk.yml | base64 -d > /tmp/aiphoto.zip
+          unzip -oq /tmp/aiphoto.zip -d .
+          test -f android/app/build.gradle.kts
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+      - name: Install Android packages
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Compile APK
+        run: gradle --no-daemon -p android :app:assembleDebug --stacktrace
+      - name: Verify APK
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -t android/app/build/outputs/apk/debug/app-debug.apk | tail -n 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIPhotoStudio-install-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
